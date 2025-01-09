@@ -199,4 +199,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-For support, email your queries to [your-email@example.com] or open an issue in the GitHub repository. 
+For support, email your queries to [contact@pixelizesolution.com] or open an issue in the GitHub repository. 

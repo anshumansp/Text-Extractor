@@ -6,19 +6,10 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const multer = require("multer");
 const path = require("path");
-const { processImage } = require("./utils/imageProcessing");
-const { extractText } = require("./utils/textExtraction");
-const { processPDF } = require("./utils/pdfProcessing");
-const { detectDiagrams } = require("./utils/diagramsDetection");
 const ensureDirectories = require("./middleware/ensureDirectories");
 const errorLogger = require("./middleware/errorLogger");
-const {
-  extractTextFromPDF,
-  extractTextFromDocx,
-  extractDataFromExcel,
-} = require("./utils/documentProcessing");
 const fs = require("fs");
-const vision = require('@google-cloud/vision');
+const vision = require("@google-cloud/vision");
 
 // Load environment variables
 dotenv.config();
@@ -127,7 +118,7 @@ async function safeFileCleanup(filePath) {
 
 // Configure Google Cloud Vision client with credentials
 const client = new vision.ImageAnnotatorClient({
-  keyFilename: './cloud-vision.json'
+  keyFilename: "./cloud-vision.json",
 });
 
 // Add this new function for document text detection
@@ -135,22 +126,22 @@ async function recognizeDocumentText(imagePath) {
   try {
     const [result] = await client.documentTextDetection(imagePath);
     const detections = result.fullTextAnnotation;
-    
+
     if (!detections) {
-      throw new Error('No text detected in the image');
+      throw new Error("No text detected in the image");
     }
 
     // Check confidence scores if available
     if (result.confidence && result.confidence < 0.6) {
-      console.warn('Low confidence detection:', result.confidence);
+      console.warn("Low confidence detection:", result.confidence);
     }
 
     return {
       text: detections.text,
-      confidence: result.confidence || null
+      confidence: result.confidence || null,
     };
   } catch (error) {
-    console.error('Error in text recognition:', error);
+    console.error("Error in text recognition:", error);
     throw error;
   }
 }
@@ -183,35 +174,47 @@ app.post(
     });
   },
   async (req, res) => {
+    const filePath = req.file?.path;
     try {
       if (!req.file) {
-        return res.status(400).json({ error: 'No image file provided' });
+        return res.status(400).json({ error: "No file provided" });
       }
 
-      const imagePath = req.file.path;
-      
-      // Replace Tesseract processing with Google Cloud Vision
-      const result = await recognizeDocumentText(imagePath);
+      // Store start time for processing duration
+      const startTime = Date.now();
 
-      // Clean up the temporary file after processing
-      fs.unlink(imagePath, (err) => {
-        if (err) console.error('Error deleting temporary file:', err);
-      });
-      console.log(result)
+      // Process the file with Google Cloud Vision
+      const result = await recognizeDocumentText(filePath);
+
+      // Calculate processing duration
+      const processingTime = Date.now() - startTime;
+
+      // Clean up the file after processing
+      await safeFileCleanup(filePath);
+
       return res.json({
         success: true,
         data: {
           text: result.text,
-          confidence: result.confidence
-        }
+          confidence: result.confidence,
+          processingTime: `${processingTime}ms`,
+        },
       });
-
     } catch (error) {
-      console.error('Error processing image:', error);
+      console.error("Error processing file:", error);
+
+      // Ensure file cleanup even if processing fails
+      if (filePath) {
+        await safeFileCleanup(filePath);
+      }
+
       return res.status(500).json({
         success: false,
-        error: 'Failed to process image',
-        details: error.message
+        error: "Failed to process file",
+        details: {
+          message: error.message,
+          code: error.code || "PROCESSING_ERROR",
+        },
       });
     }
   }
