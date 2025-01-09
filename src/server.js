@@ -127,7 +127,7 @@ async function safeFileCleanup(filePath) {
 
 // Configure Google Cloud Vision client with credentials
 const client = new vision.ImageAnnotatorClient({
-  keyFilename: './aarambh-cloud-vision.json'
+  keyFilename: './cloud-vision.json'
 });
 
 // Add this new function for document text detection
