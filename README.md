@@ -13,7 +13,7 @@ A modern web application that extracts text from images using Google Cloud Visio
 
 ## Live Demo
 
-Try out the application: [Text Extractor Demo](https://github.com/anshumansp/Text-Extractor)
+See the application Demo: [Text Extractor Demo Youtube](https://www.youtube.com/watch?v=FO7Lbuq74Y8)
 
 ## Prerequisites
 
